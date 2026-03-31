@@ -58,4 +58,28 @@ describe('Script component with beforeInteractive strategy CSS class rendering',
     expect(html).not.toContain('classname="first-script"')
     expect(html).not.toContain('classname="second-script"')
   })
+
+  it('should execute layout beforeInteractive scripts when notFound() is thrown', async () => {
+    const browser = await next.browser('/not-found-trigger')
+
+    await browser.waitForElementByCss('#not-found-page')
+
+    const hasExecuted = await browser.eval(() => {
+      return (window as any).layoutBeforeInteractiveExecuted === true
+    })
+
+    expect(hasExecuted).toBe(true)
+  })
+
+  it('should execute layout beforeInteractive scripts when an error boundary renders', async () => {
+    const browser = await next.browser('/error-trigger')
+
+    await browser.waitForElementByCss('#render-error-page')
+
+    const hasExecuted = await browser.eval(() => {
+      return (window as any).layoutBeforeInteractiveExecuted === true
+    })
+
+    expect(hasExecuted).toBe(true)
+  })
 })

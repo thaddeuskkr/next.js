@@ -186,6 +186,52 @@ function addBeforeInteractiveToCache() {
   })
 }
 
+function hasInlineBeforeInteractiveScript(props: ScriptProps): boolean {
+  const { id, src, dangerouslySetInnerHTML, children } = props
+
+  const scripts = document.querySelectorAll<HTMLScriptElement>(
+    'script[data-nscript="beforeInteractive"]'
+  )
+
+  if (id) {
+    for (const script of scripts) {
+      if (script.id === id) {
+        return true
+      }
+    }
+    return false
+  }
+
+  if (src) {
+    for (const script of scripts) {
+      if (script.getAttribute('src') === src) {
+        return true
+      }
+    }
+    return false
+  }
+
+  const inlineScript = dangerouslySetInnerHTML?.__html
+    ? (dangerouslySetInnerHTML.__html as string)
+    : typeof children === 'string'
+      ? children
+      : Array.isArray(children)
+        ? children.join('')
+        : ''
+
+  if (!inlineScript) {
+    return false
+  }
+
+  for (const script of scripts) {
+    if (script.textContent === inlineScript) {
+      return true
+    }
+  }
+
+  return false
+}
+
 export function initScriptLoader(scriptLoaderItems: ScriptProps[]) {
   scriptLoaderItems.forEach(handleClientScriptLoad)
   addBeforeInteractiveToCache()
@@ -263,11 +309,21 @@ function Script(props: ScriptProps): JSX.Element | null {
         loadScript(props)
       } else if (strategy === 'lazyOnload') {
         loadLazyScript(props)
+      } else if (strategy === 'beforeInteractive' && appDir) {
+        addBeforeInteractiveToCache()
+
+        const cacheKey = id || src
+        if (
+          (cacheKey && !LoadCache.has(cacheKey)) ||
+          (!cacheKey && !hasInlineBeforeInteractiveScript(props))
+        ) {
+          loadScript(props)
+        }
       }
 
       hasLoadScriptEffectCalled.current = true
     }
-  }, [props, strategy])
+  }, [appDir, id, props, src, strategy])
 
   if (strategy === 'beforeInteractive' || strategy === 'worker') {
     if (updateScripts) {

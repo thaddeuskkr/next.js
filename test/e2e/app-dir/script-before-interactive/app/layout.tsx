@@ -1,3 +1,5 @@
+import Script from 'next/script'
+
 export default function RootLayout({
   children,
 }: {
@@ -5,7 +7,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <Script id="layout-before-interactive" strategy="beforeInteractive">
+          {`
+            window.layoutBeforeInteractiveExecuted = true;
+          `}
+        </Script>
+        {children}
+      </body>
     </html>
   )
 }

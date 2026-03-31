@@ -15,8 +15,10 @@ window.next = {
   appDir: true,
 }
 
+type BeforeInteractiveScript = [src: string | 0, props: { [prop: string]: any }]
+
 function loadScriptsInSequence(
-  scripts: [src: string, props: { [prop: string]: any }][],
+  scripts: BeforeInteractiveScript[],
   hydrate: () => void
 ) {
   if (!scripts || !scripts.length) {
@@ -28,6 +30,7 @@ function loadScriptsInSequence(
       return promise.then(() => {
         return new Promise<void>((resolve, reject) => {
           const el = document.createElement('script')
+          el.setAttribute('data-nscript', 'beforeInteractive')
 
           if (props) {
             setAttributesFromProps(el, props)
